@@ -38,6 +38,14 @@ export async function mealRoutes(app: FastifyInstance) {
             })
             .returning('*')
 
+        const columnToUpdate = in_diet
+            ? 'total_meal_inside_diet'
+            : 'total_meal_outside_diet'
+
+        await knex('users')
+            .where('user_id', user_id)
+            .increment(columnToUpdate, 1)
+
         return reply.status(201).send(newMeal)
     })
 }
