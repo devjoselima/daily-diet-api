@@ -4,16 +4,25 @@ import { randomUUID } from 'node:crypto'
 import { z } from 'zod'
 
 export async function mealRoutes(app: FastifyInstance) {
-    app.get('/:id', async (request) => {
-        const getMealSchema = z.object({
-            id: z.string().uuid(),
-        })
+    app.get('/:id', async (request, reply) => {
+        try {
+            const getMealSchema = z.object({
+                id: z.string().uuid(),
+            })
 
-        const { id } = getMealSchema.parse(request.params)
+            const { id } = getMealSchema.parse(request.params)
 
-        const meal = await knex('meals').select('*').where('id', id).first()
+            const meal = await knex('meals').select('*').where('id', id).first()
 
-        return { meal }
+            if (!meal) {
+                return reply.status(404).send({ error: 'Meal not found' })
+            }
+
+            return { meal }
+        } catch (error) {
+            console.error(error)
+            return reply.status(500).send({ error: 'Internal Server Error' })
+        }
     })
 
     app.post('/', async (request, reply) => {
