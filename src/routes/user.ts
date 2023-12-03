@@ -28,13 +28,15 @@ export async function userRoutes(app: FastifyInstance) {
 
         const { name, email, password } = createUserSchema.parse(request.body)
 
-        await knex('users').insert({
-            user_id: randomUUID(),
-            name,
-            email,
-            password,
-        })
+        const newUser = await knex('users')
+            .insert({
+                user_id: randomUUID(),
+                name,
+                email,
+                password,
+            })
+            .returning('*')
 
-        return reply.status(201).send()
+        return reply.status(201).send(newUser)
     })
 }
