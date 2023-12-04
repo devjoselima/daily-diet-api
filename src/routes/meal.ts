@@ -2,6 +2,7 @@ import { FastifyInstance } from 'fastify'
 import { knex } from '../database'
 import { randomUUID } from 'node:crypto'
 import { z } from 'zod'
+import console from 'node:console'
 
 export async function mealRoutes(app: FastifyInstance) {
     app.get('/:id', async (request, reply) => {
@@ -56,6 +57,37 @@ export async function mealRoutes(app: FastifyInstance) {
             .increment(columnToUpdate, 1)
 
         return reply.status(201).send(newMeal)
+    })
+
+    app.patch('/:id', async (request, reply) => {
+        const updateMealIdSchema = z.object({
+            id: z.string().uuid(),
+        })
+
+        const updateMealSchema = z.object({
+            name: z.string().optional(),
+            description: z.string().optional(),
+            is_valid: z.boolean().optional(),
+        })
+
+        const { id } = updateMealIdSchema.parse(request.params)
+
+        const meal = updateMealSchema.parse(request.body)
+
+        const updateValues = {}
+
+        for (const key in meal) {
+            if (meal.hasOwnProperty(key)) {
+                updateValues[key] = meal[key]
+            }
+        }
+
+        const updatedMeal = await knex('meals')
+            .where('id', id)
+            .update(updateValues)
+            .returning('*')
+
+        return reply.status(200).send(updatedMeal)
     })
 
     app.delete('/:id', async (request, reply) => {
